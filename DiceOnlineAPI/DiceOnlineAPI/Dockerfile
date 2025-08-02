@@ -7,13 +7,12 @@ FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 
-# Kopieer alleen csproj
-COPY ["DiceOnlineAPI/DiceOnlineAPI.csproj", "DiceOnlineAPI/"]
-RUN dotnet restore "DiceOnlineAPI/DiceOnlineAPI.csproj"
+# Kopieer alleen csproj (het pad is relatief t.o.v. Dockerfile)
+COPY ["DiceOnlineAPI.csproj", "."]
+RUN dotnet restore "DiceOnlineAPI.csproj"
 
-# Kopieer de rest
+# Kopieer de rest van de code
 COPY . .
-WORKDIR "/src/DiceOnlineAPI"
 RUN dotnet build "DiceOnlineAPI.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 FROM build AS publish
