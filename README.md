@@ -1,1 +1,1 @@
-# DiceOnlineAPI
+# DiceOnline
