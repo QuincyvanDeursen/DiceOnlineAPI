@@ -39,7 +39,7 @@ app.UseHttpsRedirection();
 app.UseCors("AngularApp");
 
 // Endpoints
-app.MapHub<GameHub>("/game");
+app.MapHub<GameHub>("/gamehub");
 app.MapCarter();
 
 app.Run();

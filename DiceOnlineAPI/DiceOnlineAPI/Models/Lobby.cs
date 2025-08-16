@@ -8,7 +8,6 @@ namespace DiceOnlineAPI.Models
         [BsonId]
         [BsonRepresentation(BsonType.String)] 
         public Guid Id { get; set; }
-        public string LobbyName { get; set; } = string.Empty;
         public string LobbyCode { get; set; } = string.Empty;
         public List<string> Players { get; set; } = new();
 

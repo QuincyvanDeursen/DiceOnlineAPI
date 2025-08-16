@@ -16,7 +16,6 @@ namespace DiceOnlineAPI.Features.Dice
         public record Command(
             string LobbyCode,
             string PlayerName,
-            string ConnectionId,
             List<DiceRollInput> Dice
         );
 
@@ -33,9 +32,6 @@ namespace DiceOnlineAPI.Features.Dice
                     .MaximumLength(15)
                     .Matches("^[a-zA-Z]+$");
 
-                RuleFor(x => x.ConnectionId)
-                    .NotEmpty();
-
                 RuleFor(x => x.Dice)
                     .NotNull()
                     .Must(dice => dice.Count > 0)
@@ -45,14 +41,12 @@ namespace DiceOnlineAPI.Features.Dice
                 {
                     dice.RuleFor(d => d.Index).GreaterThanOrEqualTo(0);
                     dice.RuleFor(d => d.MinValue).GreaterThan(0);
-                    dice.RuleFor(d => d.MaxValue)
-                        .GreaterThan(d => d.MinValue);
                 });
             }
         }
 
         // ✅ Handler
-        public static async Task Handle(
+        public static async Task<object> Handle(
             Command command,
             MongoDbService database,
             IHubContext<GameHub> hub,
@@ -80,6 +74,8 @@ namespace DiceOnlineAPI.Features.Dice
                     command.PlayerName,
                     Results = result
                 }, cancellationToken);
+
+            return result;
         }
 
         // ✅ Endpoint
@@ -87,24 +83,21 @@ namespace DiceOnlineAPI.Features.Dice
         {
             public void AddRoutes(IEndpointRouteBuilder app)
             {
-                app.MapPost("/lobbies/{lobbyCode}/roll", async (
-                    string lobbyCode,
+                app.MapPost("/lobbies/roll", async (
                     Command command,
                     MongoDbService database,
                     IHubContext<GameHub> hub,
                     IValidator<Command> validator) =>
                 {
-                    // Overschrijd lobbyCode in body als je consistent wilt zijn:
-                    command = command with { LobbyCode = lobbyCode };
-
+   
                     var validation = await validator.ValidateAsync(command);
                     if (!validation.IsValid)
                         return Results.BadRequest(validation.Errors.Select(e => e.ErrorMessage));
 
                     try
                     {
-                        await Handle(command, database, hub);
-                        return Results.Ok();
+                        var result = await Handle(command, database, hub);
+                        return Results.Ok(result);
                     }
                     catch (Exception ex)
                     {

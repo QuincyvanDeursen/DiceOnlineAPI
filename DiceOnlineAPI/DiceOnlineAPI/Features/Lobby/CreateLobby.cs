@@ -10,9 +10,8 @@ namespace DiceOnlineAPI.Features.Lobby
 {
     public static class CreateLobby
     {
-        // Request DTO
+        // Fix for CS0060: Ensure consistent accessibility by making the Command record public.
         public record Command(
-            string LobbyName,
             string PLayerName,
             string ConnectionId,
             DiceSettings DiceSettings
@@ -25,17 +24,11 @@ namespace DiceOnlineAPI.Features.Lobby
         {
             public CommandValidator()
             {
-                RuleFor(x => x.LobbyName)
-                    .NotEmpty()
-                    .WithMessage("Lobby name is required")
-                    .MaximumLength(15)
-                    .WithMessage("Lobby name cannot exceed 15 characters");
-
                 RuleFor(x => x.PLayerName)
                     .NotEmpty()
                     .WithMessage("Player name is required")
-                    .MaximumLength(15)
-                    .WithMessage("Player name cannot exceed 15 characters")
+                    .MaximumLength(20)
+                    .WithMessage("Player name cannot exceed 20 characters")
                     .Matches("^[a-zA-Z]+$")
                     .WithMessage("Player name can only contain letters");
 
@@ -48,8 +41,8 @@ namespace DiceOnlineAPI.Features.Lobby
                     .WithMessage("Dice settings are required");
 
                 RuleFor(x => x.DiceSettings.Count)
-                    .InclusiveBetween(1, 10)
-                    .WithMessage("Dice count must be between 1 and 10");
+                    .InclusiveBetween(1, 8)
+                    .WithMessage("Dice count must be between 1 and 8");
 
                 RuleFor(x => x.DiceSettings.MinValue)
                     .GreaterThan(0)
@@ -62,14 +55,17 @@ namespace DiceOnlineAPI.Features.Lobby
         }
 
         // Handler
-        public static async Task Handle(Command command, MongoDbService database, IHubContext<GameHub> hub, CancellationToken cancellationToken = default)
+        private static async Task<string> Handle(
+            Command command,
+            MongoDbService database,
+            IHubContext<GameHub> hub,
+            CancellationToken cancellationToken = default)
         {
             var collection = database.GetCollection<DiceOnlineAPI.Models.Lobby>("lobbies");
 
             var lobby = new DiceOnlineAPI.Models.Lobby
             {
                 Id = Guid.NewGuid(),
-                LobbyName = command.LobbyName,
                 LobbyCode = GenerateLobbyCode(),
                 Players = new List<string> { command.PLayerName },
                 DiceSettings = new DiceOnlineAPI.Models.DiceSettings
@@ -83,10 +79,9 @@ namespace DiceOnlineAPI.Features.Lobby
             };
 
             await collection.InsertOneAsync(lobby, cancellationToken: cancellationToken);
-
             await hub.Groups.AddToGroupAsync(command.ConnectionId, lobby.LobbyCode, cancellationToken);
 
-            await hub.Clients.All.SendAsync("LobbyCreated", lobby, cancellationToken);
+            return lobby.LobbyCode; // <-- teruggeven
         }
 
         private static string GenerateLobbyCode()
@@ -108,9 +103,7 @@ namespace DiceOnlineAPI.Features.Lobby
                     IHubContext<GameHub> hub,
                     IValidator<Command> validator) =>
                 {
-                    // Valideer het request
                     var validationResult = await validator.ValidateAsync(request);
-
                     if (!validationResult.IsValid)
                     {
                         return Results.BadRequest(validationResult.Errors.Select(e => e.ErrorMessage));
@@ -118,8 +111,8 @@ namespace DiceOnlineAPI.Features.Lobby
 
                     try
                     {
-                        await Handle(request, database, hub);
-                        return Results.Ok();
+                        var lobbyCode = await Handle(request, database, hub);
+                        return Results.Ok(lobbyCode);
                     }
                     catch (Exception ex)
                     {
