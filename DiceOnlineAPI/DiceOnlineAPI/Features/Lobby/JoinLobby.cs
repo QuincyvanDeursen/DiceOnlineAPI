@@ -23,8 +23,8 @@ namespace DiceOnlineAPI.Features.Lobby
                     .WithMessage("Lobby code is required")
                     .Length(6)
                     .WithMessage("Lobby code must be exactly 6 characters")
-                    .Matches("^[A-Z0-9]+$")
-                    .WithMessage("Lobby code can only contain uppercase letters and numbers");
+  .Matches("^[A-Za-z0-9]+$")
+                    .WithMessage("Lobby code can only contain letters and numbers");
 
                 RuleFor(x => x.PlayerName)
                     .NotEmpty()
@@ -46,7 +46,7 @@ namespace DiceOnlineAPI.Features.Lobby
         {
 
             var collection = database.GetCollection<DiceOnlineAPI.Models.Lobby>("lobbies");
-            var lobby = await collection.Find(l => l.LobbyCode == command.LobbyCode).FirstOrDefaultAsync(cancellationToken) 
+            var lobby = await collection.Find(l => l.LobbyCode == command.LobbyCode).FirstOrDefaultAsync(cancellationToken)
                 ?? throw new Exception("Lobby not found");
             // Voeg speler toe aan lobby
             if (!lobby.Players.Contains(command.PlayerName))
@@ -56,7 +56,8 @@ namespace DiceOnlineAPI.Features.Lobby
                     .Set(l => l.Players, lobby.Players)
                     .Set(l => l.UpdatedAt, TimeHelper.AmsterdamNow);
                 await collection.UpdateOneAsync(l => l.Id == lobby.Id, update, cancellationToken: cancellationToken);
-            } else
+            }
+            else
             {
                 throw new Exception($"There already is a player named {command.PlayerName} in this lobby");
             }

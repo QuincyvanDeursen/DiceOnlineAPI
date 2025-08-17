@@ -8,61 +8,25 @@ var builder = WebApplication.CreateBuilder(args);
 // Services
 builder.Services.AddDiceOnlineServices();
 
-// CORS TERUG VOOR SIGNALR
+// CORS configuratie
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+
 builder.Services.AddCors(options =>
 {
-    options.AddDefaultPolicy(policy =>
+    options.AddPolicy("AngularApp", policy =>
     {
         policy
-            .WithOrigins("https://playdice.app")
+            .WithOrigins(allowedOrigins)
             .AllowAnyMethod()
             .AllowAnyHeader()
-            .AllowCredentials();
+            .AllowCredentials(); // Nodig voor SignalR
     });
 });
 
 var app = builder.Build();
 
-// VEILIGE DEBUG
-app.Use(async (context, next) =>
-{
-    Console.WriteLine($"=== REQUEST ===");
-    Console.WriteLine($"Method: {context.Request.Method}");
-    Console.WriteLine($"Path: {context.Request.Path}");
-    Console.WriteLine($"Origin: {context.Request.Headers["Origin"]}");
-
-    // Voer request uit
-    await next();
-
-    Console.WriteLine($"Response Status: {context.Response.StatusCode}");
-    Console.WriteLine($"=== END ===");
-});
-
-// CORS middleware voor SignalR
-app.UseCors();
-
-// EXTRA CORS HEADERS voor regular endpoints
-app.Use(async (context, next) =>
-{
-    // Alleen toevoegen als ze er nog niet zijn (om SignalR niet te breken)
-    if (!context.Response.Headers.ContainsKey("Access-Control-Allow-Origin"))
-    {
-        context.Response.Headers.Add("Access-Control-Allow-Origin", "https://playdice.app");
-        context.Response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-        context.Response.Headers.Add("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
-        context.Response.Headers.Add("Access-Control-Allow-Credentials", "true");
-    }
-
-    // Handle OPTIONS preflight requests
-    if (context.Request.Method == "OPTIONS")
-    {
-        context.Response.StatusCode = 200;
-        await context.Response.WriteAsync("");
-        return;
-    }
-
-    await next();
-});
+// CORS middleware
+app.UseCors("AngularApp");
 
 // Development tools
 if (app.Environment.IsDevelopment())
@@ -75,15 +39,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
-// Debug middleware
-app.Use(async (context, next) =>
-{
-    Console.WriteLine($"Request from: {context.Request.Headers["Origin"]}");
-    Console.WriteLine($"Request method: {context.Request.Method}");
-    Console.WriteLine($"Request path: {context.Request.Path}");
-    await next();
-});
 
 // Endpoints
 app.MapHub<GameHub>("/gamehub");

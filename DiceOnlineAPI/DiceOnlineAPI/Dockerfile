@@ -14,9 +14,6 @@ RUN dotnet restore "DiceOnlineAPI.csproj"
 # Kopieer de rest van de code INCLUSIEF appsettings bestanden
 COPY . .
 
-# Zorg ervoor dat appsettings bestanden expliciet aanwezig zijn
-COPY appsettings.json .
-COPY appsettings.*.json .
 
 RUN dotnet build "DiceOnlineAPI.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
