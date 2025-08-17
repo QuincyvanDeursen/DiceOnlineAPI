@@ -82,7 +82,7 @@ namespace DiceOnlineAPI.Features.Lobby
                     {
                         return Results.Problem(ex.Message);
                     }
-                });
+                }).RequireCors("AngularApp"); ;
             }
         }
     }

@@ -63,8 +63,10 @@ namespace DiceOnlineAPI.Features.Lobby
                     }
                 })
                 .WithName("GetLobby")
+                .RequireCors("AngularApp")
                 .Produces<DiceOnlineAPI.Models.Lobby>()
                 .Produces(404);
+
             }
         }
     }

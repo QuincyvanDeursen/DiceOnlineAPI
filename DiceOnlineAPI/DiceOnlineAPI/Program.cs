@@ -42,37 +42,10 @@ app.UseHttpsRedirection();
 // Endpoints
 app.MapHub<GameHub>("/gamehub");
 app.MapCarter();
-
-Console.WriteLine("=== CHECKING CONFIGURATION FILES ===");
-Console.WriteLine($"appsettings.json exists: {File.Exists("appsettings.json")}");
-Console.WriteLine($"appsettings.Production.json exists: {File.Exists("appsettings.Production.json")}");
-Console.WriteLine("=== CONFIGURATION DEBUG ===");
-Console.WriteLine($"Environment: {builder.Environment.EnvironmentName}");
-
-// Test of configuratie wordt ingelezen
-var corsSection = builder.Configuration.GetSection("Cors");
-Console.WriteLine($"Cors section exists: {corsSection.Exists()}");
-
-var allowedOriginsSection = builder.Configuration.GetSection("Cors:AllowedOrigins");
-Console.WriteLine($"AllowedOrigins section exists: {allowedOriginsSection.Exists()}");
-
-// Test wat er daadwerkelijk wordt ingelezen
-var allowedOrigins2 = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
-Console.WriteLine($"Loaded {allowedOrigins2.Length} origins:");
-foreach (var origin in allowedOrigins2)
+app.Use(async (context, next) =>
 {
-    Console.WriteLine($"  - '{origin}'");
-}
-
-// Test ook alle configuratie keys
-Console.WriteLine("All configuration keys:");
-foreach (var item in builder.Configuration.AsEnumerable())
-{
-    if (item.Key.Contains("Cors"))
-    {
-        Console.WriteLine($"  {item.Key} = {item.Value}");
-    }
-}
-Console.WriteLine("=== END CONFIGURATION DEBUG ===");
+    Console.WriteLine($"Request from: {context.Request.Headers["Origin"]}");
+    await next();
+});
 
 app.Run();
