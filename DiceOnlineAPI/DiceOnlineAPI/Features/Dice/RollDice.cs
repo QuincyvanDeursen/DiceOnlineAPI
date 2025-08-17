@@ -16,7 +16,7 @@ namespace DiceOnlineAPI.Features.Dice
         public record Command(
             string LobbyCode,
             string PlayerName,
-            List<DiceRollInput> Dice
+            List<DiceRollInput> Dices
         );
 
         // ✅ Validator
@@ -32,12 +32,12 @@ namespace DiceOnlineAPI.Features.Dice
                     .MaximumLength(15)
                     .Matches("^[a-zA-Z]+$");
 
-                RuleFor(x => x.Dice)
+                RuleFor(x => x.Dices)
                     .NotNull()
                     .Must(dice => dice.Count > 0)
                     .WithMessage("At least one dice roll must be provided");
 
-                RuleForEach(x => x.Dice).ChildRules(dice =>
+                RuleForEach(x => x.Dices).ChildRules(dice =>
                 {
                     dice.RuleFor(d => d.Index).GreaterThanOrEqualTo(0);
                     dice.RuleFor(d => d.MinValue).GreaterThan(0);
@@ -62,7 +62,7 @@ namespace DiceOnlineAPI.Features.Dice
                 throw new Exception("Player not in lobby");
 
             var random = new Random();
-            var result = command.Dice.Select(d => new
+            var result = command.Dices.Select(d => new
             {
                 d.Index,
                 Value = random.Next(d.MinValue, d.MaxValue + 1)

@@ -5,7 +5,7 @@ using FluentValidation;
 using Microsoft.AspNetCore.SignalR;
 using MongoDB.Driver;
 
-namespace DiceOnlineAPI.Features.Lobby
+namespace DiceOnlineAPI.Features.Chat
 {
     public static class SendMessage
     {
