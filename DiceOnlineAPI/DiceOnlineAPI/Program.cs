@@ -24,7 +24,7 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
-
+app.UseCors("AngularApp");
 // Development tools
 if (app.Environment.IsDevelopment())
 {
@@ -36,7 +36,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseCors("AngularApp");
+
 
 // Endpoints
 app.MapHub<GameHub>("/gamehub");

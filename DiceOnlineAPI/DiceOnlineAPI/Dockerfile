@@ -11,8 +11,13 @@ WORKDIR /src
 COPY ["DiceOnlineAPI.csproj", "."]
 RUN dotnet restore "DiceOnlineAPI.csproj"
 
-# Kopieer de rest van de code
+# Kopieer de rest van de code INCLUSIEF appsettings bestanden
 COPY . .
+
+# Zorg ervoor dat appsettings bestanden expliciet aanwezig zijn
+COPY appsettings.json .
+COPY appsettings.*.json .
+
 RUN dotnet build "DiceOnlineAPI.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 FROM build AS publish
@@ -21,5 +26,14 @@ RUN dotnet publish "DiceOnlineAPI.csproj" -c $BUILD_CONFIGURATION -o /app/publis
 
 FROM base AS final
 WORKDIR /app
+
+# Kopieer gepubliceerde app
 COPY --from=publish /app/publish .
+
+# Zorg ervoor dat appsettings bestanden in de final image zitten
+COPY --from=publish /app/publish/appsettings*.json ./
+
+# Set environment variabelen voor CORS (fallback)
+ENV Cors__AllowedOrigins__0=https://playdice.app
+
 ENTRYPOINT ["dotnet", "DiceOnlineAPI.dll"]
