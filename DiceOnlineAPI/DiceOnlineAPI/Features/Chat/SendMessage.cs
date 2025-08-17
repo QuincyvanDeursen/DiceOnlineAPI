@@ -74,7 +74,7 @@ namespace DiceOnlineAPI.Features.Chat
                     {
                         return Results.NotFound(ex.Message);
                     }
-                }).RequireCors("AngularApp"); ;
+                }); ;
             }
         }
     }

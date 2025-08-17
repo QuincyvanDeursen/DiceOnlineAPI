@@ -104,7 +104,7 @@ namespace DiceOnlineAPI.Features.Dice
                         return Results.BadRequest(ex.Message);
                     }
                 })
-                .WithName("RollDice").RequireCors("AngularApp"); ;
+                .WithName("RollDice"); ;
             }
         }
     }

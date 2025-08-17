@@ -96,7 +96,7 @@ namespace DiceOnlineAPI.Features.Lobby
                         return Results.BadRequest(ex.Message);
                     }
                 })
-                .WithName("JoinLobby").RequireCors("AngularApp");
+                .WithName("JoinLobby");
             }
         }
     }

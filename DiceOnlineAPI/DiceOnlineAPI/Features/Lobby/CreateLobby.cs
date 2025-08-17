@@ -120,7 +120,7 @@ namespace DiceOnlineAPI.Features.Lobby
                     }
                 })
                 .WithName("CreateLobby")
-                .RequireCors("AngularApp");
+               ;
             }
         }
     }

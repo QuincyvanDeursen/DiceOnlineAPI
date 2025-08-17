@@ -72,7 +72,7 @@ namespace DiceOnlineAPI.Features.Lobby
                     {
                         return Results.BadRequest(validationResult.Errors.Select(e => e.ErrorMessage));
                     }
-                    
+
                     try
                     {
                         await Handle(command, database, hub);
@@ -82,7 +82,7 @@ namespace DiceOnlineAPI.Features.Lobby
                     {
                         return Results.Problem(ex.Message);
                     }
-                }).RequireCors("AngularApp"); ;
+                });
             }
         }
     }

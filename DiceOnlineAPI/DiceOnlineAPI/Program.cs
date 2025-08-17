@@ -8,23 +8,27 @@ var builder = WebApplication.CreateBuilder(args);
 // Services
 builder.Services.AddDiceOnlineServices();
 
-// HARDCODED CORS - geen configuratie gedoe
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AngularApp", policy =>
-    {
-        policy
-            .WithOrigins("https://playdice.app") // Alleen production
-            .AllowAnyMethod()
-            .AllowAnyHeader()
-            .AllowCredentials();
-    });
-});
-
 var app = builder.Build();
 
-// CORS heel vroeg
-app.UseCors("AngularApp");
+// BRUTALE CORS OPLOSSING - Voeg headers toe aan ELKE response
+app.Use(async (context, next) =>
+{
+    // Voeg CORS headers toe
+    context.Response.Headers.Add("Access-Control-Allow-Origin", "https://playdice.app");
+    context.Response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    context.Response.Headers.Add("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
+    context.Response.Headers.Add("Access-Control-Allow-Credentials", "true");
+
+    // Handle OPTIONS preflight requests
+    if (context.Request.Method == "OPTIONS")
+    {
+        context.Response.StatusCode = 200;
+        await context.Response.WriteAsync("");
+        return;
+    }
+
+    await next();
+});
 
 // Development tools
 if (app.Environment.IsDevelopment())
