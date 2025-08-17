@@ -23,26 +23,18 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// DEBUG ALLES
+// VEILIGE DEBUG
 app.Use(async (context, next) =>
 {
-    Console.WriteLine($"=== INCOMING REQUEST ===");
+    Console.WriteLine($"=== REQUEST ===");
     Console.WriteLine($"Method: {context.Request.Method}");
     Console.WriteLine($"Path: {context.Request.Path}");
     Console.WriteLine($"Origin: {context.Request.Headers["Origin"]}");
-    Console.WriteLine($"User-Agent: {context.Request.Headers["User-Agent"]}");
 
+    // Voer request uit
     await next();
 
-    Console.WriteLine($"=== OUTGOING RESPONSE ===");
-    Console.WriteLine($"Status: {context.Response.StatusCode}");
-    foreach (var header in context.Response.Headers)
-    {
-        if (header.Key.Contains("Access-Control"))
-        {
-            Console.WriteLine($"Header: {header.Key} = {string.Join(", ", header.Value)}");
-        }
-    }
+    Console.WriteLine($"Response Status: {context.Response.StatusCode}");
     Console.WriteLine($"=== END ===");
 });
 
