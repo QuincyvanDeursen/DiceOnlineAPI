@@ -8,16 +8,35 @@ var builder = WebApplication.CreateBuilder(args);
 // Services
 builder.Services.AddDiceOnlineServices();
 
+// CORS TERUG VOOR SIGNALR
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy
+            .WithOrigins("https://playdice.app")
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials();
+    });
+});
+
 var app = builder.Build();
 
-// BRUTALE CORS OPLOSSING - Voeg headers toe aan ELKE response
+// CORS middleware voor SignalR
+app.UseCors();
+
+// EXTRA CORS HEADERS voor regular endpoints
 app.Use(async (context, next) =>
 {
-    // Voeg CORS headers toe
-    context.Response.Headers.Add("Access-Control-Allow-Origin", "https://playdice.app");
-    context.Response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-    context.Response.Headers.Add("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
-    context.Response.Headers.Add("Access-Control-Allow-Credentials", "true");
+    // Alleen toevoegen als ze er nog niet zijn (om SignalR niet te breken)
+    if (!context.Response.Headers.ContainsKey("Access-Control-Allow-Origin"))
+    {
+        context.Response.Headers.Add("Access-Control-Allow-Origin", "https://playdice.app");
+        context.Response.Headers.Add("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+        context.Response.Headers.Add("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
+        context.Response.Headers.Add("Access-Control-Allow-Credentials", "true");
+    }
 
     // Handle OPTIONS preflight requests
     if (context.Request.Method == "OPTIONS")
