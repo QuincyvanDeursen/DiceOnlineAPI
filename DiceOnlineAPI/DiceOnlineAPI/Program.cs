@@ -2,30 +2,30 @@ using Carter;
 using DiceOnlineAPI.DiceOnlineHub;
 using DiceOnlineAPI.Extensions;
 using Scalar.AspNetCore;
-using System.Collections;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Services
 builder.Services.AddDiceOnlineServices();
 
-// Cors
-var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
-
+// HARDCODED CORS - geen configuratie gedoe
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AngularApp", policy =>
     {
         policy
-            .WithOrigins(allowedOrigins)
+            .WithOrigins("https://playdice.app") // Alleen production
             .AllowAnyMethod()
             .AllowAnyHeader()
-            .AllowCredentials(); // Nodig voor SignalR
+            .AllowCredentials();
     });
 });
 
 var app = builder.Build();
+
+// CORS heel vroeg
 app.UseCors("AngularApp");
+
 // Development tools
 if (app.Environment.IsDevelopment())
 {
@@ -38,14 +38,17 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+// Debug middleware
+app.Use(async (context, next) =>
+{
+    Console.WriteLine($"Request from: {context.Request.Headers["Origin"]}");
+    Console.WriteLine($"Request method: {context.Request.Method}");
+    Console.WriteLine($"Request path: {context.Request.Path}");
+    await next();
+});
 
 // Endpoints
 app.MapHub<GameHub>("/gamehub");
 app.MapCarter();
-app.Use(async (context, next) =>
-{
-    Console.WriteLine($"Request from: {context.Request.Headers["Origin"]}");
-    await next();
-});
 
 app.Run();
