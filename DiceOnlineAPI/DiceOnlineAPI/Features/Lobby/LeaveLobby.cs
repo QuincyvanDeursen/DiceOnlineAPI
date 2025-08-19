@@ -38,7 +38,7 @@ namespace DiceOnlineAPI.Features.Lobby
             CancellationToken cancellationToken = default)
         {
             var collection = database.GetCollection<DiceOnlineAPI.Models.Lobby>("lobbies");
-            var lobby = await collection.Find(l => l.LobbyCode == command.LobbyCode).FirstOrDefaultAsync(cancellationToken)
+            var lobby = await collection.Find(l => l.LobbyCode == command.LobbyCode.ToUpper()).FirstOrDefaultAsync(cancellationToken)
                 ?? throw new Exception("Lobby not found");
 
             // Check if the player exists in the lobby

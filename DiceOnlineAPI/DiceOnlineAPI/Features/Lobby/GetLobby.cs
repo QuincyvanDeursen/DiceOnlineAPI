@@ -31,7 +31,7 @@ namespace DiceOnlineAPI.Features.Lobby
             CancellationToken cancellationToken = default)
         {
             var collection = database.GetCollection<DiceOnlineAPI.Models.Lobby>("lobbies");
-            var lobby = await collection.Find(l => l.LobbyCode == request.LobbyCode).FirstOrDefaultAsync(cancellationToken)
+            var lobby = await collection.Find(l => l.LobbyCode == request.LobbyCode.ToUpper()).FirstOrDefaultAsync(cancellationToken)
                 ?? throw new Exception("Lobby not found");
             return lobby;
         }

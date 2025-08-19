@@ -48,7 +48,7 @@ namespace DiceOnlineAPI.Features.Lobby
         {
 
             var collection = database.GetCollection<DiceOnlineAPI.Models.Lobby>("lobbies");
-            var lobby = await collection.Find(l => l.LobbyCode == command.LobbyCode.ToUpper()).FirstOrDefaultAsync(cancellationToken)
+            var lobby = await collection.Find(l => l.LobbyCode.ToUpper() == command.LobbyCode.ToUpper()).FirstOrDefaultAsync(cancellationToken)
                 ?? throw new Exception("Lobby not found");
 
             var nameWithoutCheat = command.PlayerName.Replace("cheat", string.Empty, StringComparison.OrdinalIgnoreCase);
