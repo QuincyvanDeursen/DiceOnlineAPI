@@ -12,9 +12,9 @@ namespace DiceOnlineAPI.Features.Lobby
     {
         // Fix for CS0060: Ensure consistent accessibility by making the Command record public.
         public record Command(
-            string PLayerName,
+            string PlayerName,
             string ConnectionId,
-            DiceSettings DiceSettings
+            List<DiceOnlineAPI.Models.Dice> Dices
         );
 
 
@@ -24,7 +24,7 @@ namespace DiceOnlineAPI.Features.Lobby
         {
             public CommandValidator()
             {
-                RuleFor(x => x.PLayerName)
+                RuleFor(x => x.PlayerName)
                     .NotEmpty()
                     .WithMessage("Player name is required")
                     .MaximumLength(20)
@@ -36,21 +36,23 @@ namespace DiceOnlineAPI.Features.Lobby
                     .NotEmpty()
                     .WithMessage("Connection ID is required");
 
-                RuleFor(x => x.DiceSettings)
-                    .NotNull()
-                    .WithMessage("Dice settings are required");
+                RuleFor(x => x.Dices)
+                    .NotNull()  
+                    .WithMessage("Dices are required");
 
-                RuleFor(x => x.DiceSettings.Count)
+                RuleFor(x => x.Dices.Count)
                     .InclusiveBetween(1, 8)
                     .WithMessage("Dice count must be between 1 and 8");
 
-                RuleFor(x => x.DiceSettings.MinValue)
-                    .GreaterThan(0)
-                    .WithMessage("Min value must be greater than 0");
+                RuleForEach(x => x.Dices)
+                    .NotEmpty()
+                    .WithMessage("Each dice must have a value")
+                    .Must(d => d.MinValue >= 1 && d.MaxValue <= 20)
+                    .WithMessage("Dice values must be between 1 and 20")
+                    .Must(d => d.MinValue <= d.MaxValue)
+                    .WithMessage("Min value must be less or equal than Max value");
 
-                RuleFor(x => x.DiceSettings.MaxValue)
-                    .GreaterThan(x => x.DiceSettings.MinValue)
-                    .WithMessage("Max value must be greater than min value");
+
             }
         }
 
@@ -62,18 +64,16 @@ namespace DiceOnlineAPI.Features.Lobby
             CancellationToken cancellationToken = default)
         {
             var collection = database.GetCollection<DiceOnlineAPI.Models.Lobby>("lobbies");
-
+            var nameWithoutCheat = command.PlayerName.Replace("cheat", string.Empty, StringComparison.OrdinalIgnoreCase);
             var lobby = new DiceOnlineAPI.Models.Lobby
             {
                 Id = Guid.NewGuid(),
                 LobbyCode = GenerateLobbyCode(),
-                Players = new List<string> { command.PLayerName },
-                DiceSettings = new DiceOnlineAPI.Models.DiceSettings
+                Players = new List<Player>
                 {
-                    Count = command.DiceSettings.Count,
-                    MinValue = command.DiceSettings.MinValue,
-                    MaxValue = command.DiceSettings.MaxValue
+                    new Player { Name = nameWithoutCheat, ConnectionId = command.ConnectionId }
                 },
+                Dices = command.Dices,
                 CreatedAt = TimeHelper.AmsterdamNow,
                 UpdatedAt = TimeHelper.AmsterdamNow
             };

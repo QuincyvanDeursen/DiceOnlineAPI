@@ -40,11 +40,14 @@ namespace DiceOnlineAPI.Features.Lobby
             var collection = database.GetCollection<DiceOnlineAPI.Models.Lobby>("lobbies");
             var lobby = await collection.Find(l => l.LobbyCode == command.LobbyCode).FirstOrDefaultAsync(cancellationToken)
                 ?? throw new Exception("Lobby not found");
-            // Verwijder speler uit lobby
+
+            // Check if the player exists in the lobby
             var playerName = command.PlayerName;
-            if (lobby.Players.Contains(playerName))
+            var player = lobby.Players.FirstOrDefault(p => p.Name == playerName);
+            if (player != null)
             {
-                lobby.Players.Remove(playerName);
+                // Remove the player from the lobby
+                lobby.Players.Remove(player);
                 var update = Builders<DiceOnlineAPI.Models.Lobby>.Update
                     .Set(l => l.Players, lobby.Players)
                     .Set(l => l.UpdatedAt, DateTime.UtcNow);
@@ -54,6 +57,7 @@ namespace DiceOnlineAPI.Features.Lobby
             {
                 throw new Exception("Player not found in lobby");
             }
+
             await hub.Clients.Group(command.LobbyCode).SendAsync("PlayerLeft", command.PlayerName, cancellationToken);
             await hub.Groups.RemoveFromGroupAsync(command.ConnectionId, command.LobbyCode);
         }

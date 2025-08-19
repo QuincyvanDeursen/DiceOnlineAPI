@@ -1,4 +1,6 @@
 using Carter;
+using DiceOnlineAPI.Database.Indexes;
+using DiceOnlineAPI.Database.Service;
 using DiceOnlineAPI.DiceOnlineHub;
 using DiceOnlineAPI.Extensions;
 using Scalar.AspNetCore;
@@ -8,7 +10,9 @@ var builder = WebApplication.CreateBuilder(args);
 // Services
 builder.Services.AddDiceOnlineServices();
 
-// CORS configuratie
+
+
+// Cors
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
 
 builder.Services.AddCors(options =>
@@ -25,8 +29,9 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// CORS middleware
-app.UseCors("AngularApp");
+// TTL-indexen aanmaken bij startup
+var mongoService = app.Services.GetRequiredService<MongoDbService>();
+MongoDbIndex.EnsureIndexes(mongoService);
 
 // Development tools
 if (app.Environment.IsDevelopment())
@@ -39,6 +44,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseCors("AngularApp");
 
 // Endpoints
 app.MapHub<GameHub>("/gamehub");

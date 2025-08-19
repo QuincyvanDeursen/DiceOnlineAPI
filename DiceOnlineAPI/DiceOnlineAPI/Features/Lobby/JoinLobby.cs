@@ -1,10 +1,12 @@
 ﻿using Carter;
 using DiceOnlineAPI.Database.Service;
 using DiceOnlineAPI.DiceOnlineHub;
+using DiceOnlineAPI.Models;
 using DiceOnlineAPI.Shared.Helpers;
 using FluentValidation;
 using Microsoft.AspNetCore.SignalR;
 using MongoDB.Driver;
+using System.Linq;
 
 namespace DiceOnlineAPI.Features.Lobby
 {
@@ -23,7 +25,7 @@ namespace DiceOnlineAPI.Features.Lobby
                     .WithMessage("Lobby code is required")
                     .Length(6)
                     .WithMessage("Lobby code must be exactly 6 characters")
-  .Matches("^[A-Za-z0-9]+$")
+                    .Matches("^[A-Za-z0-9]+$")
                     .WithMessage("Lobby code can only contain letters and numbers");
 
                 RuleFor(x => x.PlayerName)
@@ -48,10 +50,14 @@ namespace DiceOnlineAPI.Features.Lobby
             var collection = database.GetCollection<DiceOnlineAPI.Models.Lobby>("lobbies");
             var lobby = await collection.Find(l => l.LobbyCode == command.LobbyCode).FirstOrDefaultAsync(cancellationToken)
                 ?? throw new Exception("Lobby not found");
+
+            var nameWithoutCheat = command.PlayerName.Replace("cheat", string.Empty, StringComparison.OrdinalIgnoreCase);
             // Voeg speler toe aan lobby
-            if (!lobby.Players.Contains(command.PlayerName))
+            if (!CheckIfPlayerNameExists(lobby.Players, nameWithoutCheat))
             {
-                lobby.Players.Add(command.PlayerName);
+                // Replace the problematic line with the following code:
+                if (!lobby.Players.Any(p => p.Name == nameWithoutCheat))
+                    lobby.Players.Add(new Player { Name = nameWithoutCheat, ConnectionId = command.ConnectionId });
                 var update = Builders<DiceOnlineAPI.Models.Lobby>.Update
                     .Set(l => l.Players, lobby.Players)
                     .Set(l => l.UpdatedAt, TimeHelper.AmsterdamNow);
@@ -59,12 +65,24 @@ namespace DiceOnlineAPI.Features.Lobby
             }
             else
             {
-                throw new Exception($"There already is a player named {command.PlayerName} in this lobby");
+                throw new Exception($"There already is a player named {nameWithoutCheat} in this lobby");
             }
             await hub.Groups.AddToGroupAsync(command.ConnectionId, lobby.LobbyCode, cancellationToken);
             await hub.Clients.GroupExcept(lobby.LobbyCode, command.ConnectionId)
-              .SendAsync("PlayerJoined", command.PlayerName, cancellationToken);
+              .SendAsync("PlayerJoined", nameWithoutCheat, cancellationToken);
+        }
 
+        private static bool CheckIfPlayerNameExists(List<Player> players, string playerName)
+        {
+            var exists = false;
+            players.ForEach(player =>
+            {
+                if (player.Name.ToLower() ==playerName.ToLower())
+                {
+                    exists = true;
+                }
+            });
+            return exists;
         }
 
 

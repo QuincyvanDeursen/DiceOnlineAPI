@@ -9,14 +9,12 @@ namespace DiceOnlineAPI.Features.Dice
 {
     public static class RollDice
     {
-        // ✅ Dice info per dobbelsteen
-        public record DiceRollInput(int Index, int MinValue, int MaxValue);
 
         // ✅ Request DTO
         public record Command(
             string LobbyCode,
             string PlayerName,
-            List<DiceRollInput> Dices
+            List<DiceOnlineAPI.Models.Dice> Dices
         );
 
         // ✅ Validator
@@ -57,9 +55,6 @@ namespace DiceOnlineAPI.Features.Dice
             var lobby = await collection.Find(l => l.LobbyCode == command.LobbyCode)
                 .FirstOrDefaultAsync(cancellationToken)
                 ?? throw new Exception("Lobby not found");
-
-            if (!lobby.Players.Contains(command.PlayerName))
-                throw new Exception("Player not in lobby");
 
             var random = new Random();
             var result = command.Dices.Select(d => new
